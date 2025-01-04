@@ -2,18 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>Welcome</title>
 </head>
 <body>
-    <h1>Login</h1>
-    <form method="post" action="">
+    <h1>Welcome to the Social App</h1>
+    <form method="post">
         {% csrf_token %}
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required><br><br>
+
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required><br><br>
+
         <button type="submit">Login</button>
-        <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
     </form>
+    <p>Don't have an account? <a href="{% url 'register' %}">Click here to register</a>.</p>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
 </body>
 </html>
