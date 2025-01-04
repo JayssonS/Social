@@ -6,6 +6,8 @@
 </head>
 <body>
     <h1>Welcome to the Social App</h1>
+
+    <!-- Traditional Login Form -->
     <form method="post">
         {% csrf_token %}
         <label for="username">Username:</label>
@@ -18,12 +20,7 @@
     </form>
     <p>Don't have an account? <a href="{% url 'register' %}">Click here to register</a>.</p>
 
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <!-- Spotify Login -->
+    <a href="{% url 'spotify-login' %}">Login with Spotify</a>
 </body>
 </html>

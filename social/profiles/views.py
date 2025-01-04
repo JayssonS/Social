@@ -9,6 +9,11 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
+import requests
+from django.shortcuts import redirect
+from django.conf import settings
+from urllib.parse import urlencode
+
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
@@ -92,3 +97,50 @@ def dashboard_view(request):
 def logout_view(request):
     logout(request)  # End the user session
     return redirect('/')  # Redirect to the welcome/login page
+
+def spotify_login(request):
+    scopes = "user-read-email"
+    params = {
+        "client_id": settings.SPOTIFY_CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
+        "scope": scopes,
+    }
+    url = f"https://accounts.spotify.com/authorize?{urlencode(params)}"
+    return redirect(url)
+
+def spotify_callback(request):
+    code = request.GET.get("code")
+    if not code:
+        return redirect("/")  # Redirect to login page if no code is provided
+
+    # Exchange the code for an access token
+    token_url = "https://accounts.spotify.com/api/token"
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
+        "client_id": settings.SPOTIFY_CLIENT_ID,
+        "client_secret": settings.SPOTIFY_CLIENT_SECRET,
+    }
+    response = requests.post(token_url, data=data)
+    response_data = response.json()
+    access_token = response_data.get("access_token")
+
+    if not access_token:
+        return redirect("/")  # Redirect if token exchange fails
+
+    # Fetch user info
+    user_info_url = "https://api.spotify.com/v1/me"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    user_info_response = requests.get(user_info_url, headers=headers)
+    user_info = user_info_response.json()
+
+    # Get or create user
+    email = user_info.get("email")
+    username = user_info.get("id")
+    if email:
+        user, created = User.objects.get_or_create(username=username, defaults={"email": email})
+        login(request, user)
+        return redirect("/dashboard/")  # Redirect to dashboard after successful login
+    return redirect("/")

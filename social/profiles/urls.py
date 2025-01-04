@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import welcome_view, register_view, dashboard_view, logout_view, UserProfileView, FriendRequestListCreateView, FriendshipListView
+from .views import welcome_view, register_view, dashboard_view, logout_view, spotify_callback, spotify_login, UserProfileView, FriendRequestListCreateView, FriendshipListView
 
 urlpatterns = [
     path('', welcome_view, name='welcome'),  # Default welcome and login
@@ -10,4 +10,6 @@ urlpatterns = [
     path('friends/requests/', FriendRequestListCreateView.as_view(), name='friend-requests'),  # Friend requests
     path('friends/', FriendshipListView.as_view(), name='friendships'),  # Friendships
     path('logout/', logout_view, name='logout'),  # Logout route
+    path('spotify/login/', spotify_login, name='spotify-login'),
+    path('spotify/callback/', spotify_callback, name='spotify-callback'),
 ]
