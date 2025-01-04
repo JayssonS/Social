@@ -90,16 +90,46 @@ def welcome_view(request):
             messages.error(request, "Invalid username or password.")
     return render(request, "profiles/welcome.html")
 
+import requests
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def dashboard_view(request):
-    return render(request, "profiles/dashboard.html", {"username": request.user.username})
+    access_token = request.session.get('spotify_access_token')
+
+    if not access_token:
+        return redirect('/spotify/login/')  # Redirect if not logged in with Spotify
+
+    time_range = request.GET.get('time_range', 'medium_term')  # Default to medium_term
+
+    # Fetch top artists
+    url = "https://api.spotify.com/v1/me/top/artists"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"time_range": time_range, "limit": 50}
+
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        top_artists = response.json().get('items', [])
+    else:
+        top_artists = []
+        print(f"Spotify API Error: {response.status_code}, {response.json()}")
+    print(f"Response: {response.json()}")
+    print(f"Access Token: {request.session.get('spotify_access_token')}")
+
+    # Pass data to the template
+    return render(request, "profiles/dashboard.html", {
+        "top_artists": top_artists,
+        "time_range": time_range,
+    })
+
 
 def logout_view(request):
     logout(request)  # End the user session
     return redirect('/')  # Redirect to the welcome/login page
 
 def spotify_login(request):
-    scopes = "user-read-email"
+    scopes = "user-top-read"
     params = {
         "client_id": settings.SPOTIFY_CLIENT_ID,
         "response_type": "code",
@@ -112,9 +142,9 @@ def spotify_login(request):
 def spotify_callback(request):
     code = request.GET.get("code")
     if not code:
-        return redirect("/")  # Redirect to login page if no code is provided
+        return redirect("/")  # Redirect to the login page if no code
 
-    # Exchange the code for an access token
+    # Exchange code for access token
     token_url = "https://accounts.spotify.com/api/token"
     data = {
         "grant_type": "authorization_code",
@@ -125,22 +155,25 @@ def spotify_callback(request):
     }
     response = requests.post(token_url, data=data)
     response_data = response.json()
+
     access_token = response_data.get("access_token")
-
     if not access_token:
-        return redirect("/")  # Redirect if token exchange fails
+        return redirect("/")  # Redirect back if token exchange fails
 
-    # Fetch user info
+    # Fetch Spotify user info
     user_info_url = "https://api.spotify.com/v1/me"
     headers = {"Authorization": f"Bearer {access_token}"}
     user_info_response = requests.get(user_info_url, headers=headers)
     user_info = user_info_response.json()
 
-    # Get or create user
     email = user_info.get("email")
     username = user_info.get("id")
-    if email:
-        user, created = User.objects.get_or_create(username=username, defaults={"email": email})
-        login(request, user)
-        return redirect("/dashboard/")  # Redirect to dashboard after successful login
-    return redirect("/")
+
+    # Create or get a Django user
+    user, created = User.objects.get_or_create(username=username, defaults={"email": email})
+    login(request, user)  # Log the user into Django
+
+    # Save Spotify token to session
+    request.session['spotify_access_token'] = access_token
+
+    return redirect("/dashboard/")  # Redirect to the dashboard
