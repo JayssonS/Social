@@ -13,6 +13,8 @@ import requests
 from django.shortcuts import redirect
 from django.conf import settings
 from urllib.parse import urlencode
+from django.shortcuts import get_object_or_404
+
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -89,10 +91,6 @@ def welcome_view(request):
         else:
             messages.error(request, "Invalid username or password.")
     return render(request, "profiles/welcome.html")
-
-import requests
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def dashboard_view(request):
@@ -182,3 +180,31 @@ def spotify_callback(request):
     request.session['spotify_access_token'] = access_token
 
     return redirect("/dashboard/")  # Redirect to the dashboard
+
+from django.shortcuts import get_object_or_404
+
+def public_profile_view(request, username):
+    user = get_object_or_404(User, username=username)  # Fetch user by username
+    profile = user.profile  # Get the associated UserProfile (if needed)
+
+    # For testing: Fetch top artists directly from Spotify
+    access_token = request.session.get('spotify_access_token')  # Temporary for testing
+
+    if not access_token:
+        top_artists = []
+    else:
+        url = "https://api.spotify.com/v1/me/top/artists"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        params = {"time_range": "medium_term", "limit": 50}
+
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            top_artists = response.json().get('items', [])
+        else:
+            top_artists = []
+            print(f"Spotify API Error: {response.status_code}, {response.json()}")
+
+    return render(request, "profiles/public_profile.html", {
+        "profile_user": user,
+        "top_artists": top_artists,
+    })

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ profile_user.username }}'s Profile</title>
+</head>
+<body>
+    <h1>Public Profile: {{ profile_user.username }}</h1>
+
+    <!-- Display Top Artists -->
+    <h2>Top 50 Artists</h2>
+    <ul>
+        {% for artist in top_artists %}
+            <li>
+                <strong>{{ artist.name }}</strong>
+                <br>
+                <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}" style="width: 100px;">
+                <br>
+                Genres: {{ artist.genres|join:", " }}
+                <br>
+                Followers: {{ artist.followers.total }}
+                <br>
+                <a href="{{ artist.external_urls.spotify }}" target="_blank">View on Spotify</a>
+            </li>
+        {% empty %}
+            <p>No artists found. This user might not have connected their Spotify account yet.</p>
+        {% endfor %}
+    </ul>
+</body>
+</html>
