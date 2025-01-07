@@ -99,7 +99,12 @@ def dashboard_view(request):
     access_token = request.session.get('spotify_access_token')
 
     if not access_token:
-        return redirect('/spotify/login/')  # Redirect if not logged in with Spotify
+        # Show a dashboard page prompting users to connect Spotify
+        return render(request, "profiles/dashboard.html", {
+            "top_artists": [],
+            "time_range": None,
+            "prompt_spotify_login": True,
+        })
 
     time_range = request.GET.get('time_range', 'medium_term')  # Default to medium_term
 
@@ -114,14 +119,14 @@ def dashboard_view(request):
     else:
         top_artists = []
         print(f"Spotify API Error: {response.status_code}, {response.json()}")
-    print(f"Response: {response.json()}")
-    print(f"Access Token: {request.session.get('spotify_access_token')}")
 
     # Pass data to the template
     return render(request, "profiles/dashboard.html", {
         "top_artists": top_artists,
         "time_range": time_range,
+        "prompt_spotify_login": False,
     })
+
 
 
 def logout_view(request):
