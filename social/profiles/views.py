@@ -96,16 +96,17 @@ def dashboard_view(request):
     access_token = request.session.get('spotify_access_token')
 
     if not access_token:
-        # Show a dashboard page prompting users to connect Spotify
+        # If the user is not connected to Spotify, prompt them to log in
         return render(request, "profiles/dashboard.html", {
             "top_artists": [],
             "time_range": None,
             "prompt_spotify_login": True,
+            "username": request.user.username,  # Pass the logged-in user's username
         })
 
     time_range = request.GET.get('time_range', 'medium_term')  # Default to medium_term
 
-    # Fetch top artists
+    # Fetch top artists from Spotify API
     url = "https://api.spotify.com/v1/me/top/artists"
     headers = {"Authorization": f"Bearer {access_token}"}
     params = {"time_range": time_range, "limit": 50}
@@ -117,13 +118,12 @@ def dashboard_view(request):
         top_artists = []
         print(f"Spotify API Error: {response.status_code}, {response.json()}")
 
-    # Pass data to the template
+    # Render the dashboard with the username and top artists
     return render(request, "profiles/dashboard.html", {
         "top_artists": top_artists,
         "time_range": time_range,
-        "prompt_spotify_login": False,
+        "username": request.user.username,  # Pass the logged-in user's username
     })
-
 
 
 def logout_view(request):
@@ -216,12 +216,3 @@ def public_profile_view(request, username):
         "profile_user": user,  # The user being viewed
         "top_artists": top_artists,  # List of top artists
     })
-from django.conf.urls import handler404
-from django.shortcuts import render
-
-def custom_404_view(request, exception):
-    print("Custom 404 page rendered")  # Debugging
-    return render(request, "404.html", status=404)
-
-
-handler404 = custom_404_view

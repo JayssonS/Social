@@ -59,7 +59,7 @@ ROOT_URLCONF = 'social.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'profiles/templates'],  # Add this
+        'DIRS': [BASE_DIR / 'profiles/templates/profiles'],  # Add this
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

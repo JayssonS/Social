@@ -1,29 +1,42 @@
-<h2>Your Top 50 Artists</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ username }}!</h1>  <!-- Display the username -->
 
-{% if prompt_spotify_login %}
-    <p>You are not connected to Spotify. <a href="{% url 'spotify-login' %}">Click here to connect your Spotify account</a>.</p>
-{% else %}
-    <!-- Tabs for Time Range -->
-    <div>
-        <a href="?time_range=short_term" {% if time_range == "short_term" %}style="font-weight: bold;"{% endif %}>Short Term</a> |
-        <a href="?time_range=medium_term" {% if time_range == "medium_term" %}style="font-weight: bold;"{% endif %}>Medium Term</a> |
-        <a href="?time_range=long_term" {% if time_range == "long_term" %}style="font-weight: bold;"{% endif %}>Long Term</a>
-    </div>
+    <h2>Your Top 50 Artists</h2>
 
-    <!-- Display Top Artists -->
-    <ul>
-        {% for artist in top_artists %}
-            <li>
-                <strong>{{ artist.name }}</strong>
-                <br>
-                <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}" style="width: 100px;">
-                <br>
-                Genres: {{ artist.genres|join:", " }}
-                <br>
-                Followers: {{ artist.followers.total }}
-                <br>
-                <a href="{{ artist.external_urls.spotify }}" target="_blank">View on Spotify</a>
-            </li>
-        {% endfor %}
-    </ul>
-{% endif %}
+    {% if prompt_spotify_login %}
+        <p>You are not connected to Spotify. <a href="{% url 'spotify-login' %}">Click here to connect your Spotify account</a>.</p>
+    {% else %}
+        <!-- Tabs for Time Range -->
+        <div>
+            <a href="?time_range=short_term" {% if time_range == "short_term" %}style="font-weight: bold;"{% endif %}>Short Term</a> |
+            <a href="?time_range=medium_term" {% if time_range == "medium_term" %}style="font-weight: bold;"{% endif %}>Medium Term</a> |
+            <a href="?time_range=long_term" {% if time_range == "long_term" %}style="font-weight: bold;"{% endif %}>Long Term</a>
+        </div>
+
+        <!-- Display Top Artists -->
+        <ul>
+            {% for artist in top_artists %}
+                <li>
+                    <strong>{{ artist.name }}</strong>
+                    <br>
+                    <img src="{{ artist.images.0.url }}" alt="{{ artist.name }}" style="width: 100px;">
+                    <br>
+                    Genres: {{ artist.genres|join:", " }}
+                    <br>
+                    Followers: {{ artist.followers.total }}
+                    <br>
+                    <a href="{{ artist.external_urls.spotify }}" target="_blank">View on Spotify</a>
+                </li>
+            {% empty %}
+                <p>No artists found.</p>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>
