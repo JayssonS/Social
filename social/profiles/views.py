@@ -16,7 +16,6 @@ from urllib.parse import urlencode
 from django.shortcuts import get_object_or_404
 
 
-
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
@@ -183,16 +182,24 @@ def spotify_callback(request):
 
 from django.shortcuts import get_object_or_404
 
-def public_profile_view(request, username):
-    user = get_object_or_404(User, username=username)  # Fetch user by username
-    profile = user.profile  # Get the associated UserProfile (if needed)
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import User
+from django.http import Http404
+import requests
 
-    # For testing: Fetch top artists directly from Spotify
-    access_token = request.session.get('spotify_access_token')  # Temporary for testing
+def public_profile_view(request, username):
+    # Get the user by username or raise a 404 with a custom message
+    user = get_object_or_404(User, username=username)
+
+    # For testing, fetch top artists directly from Spotify API
+    # In production, this should be cached or stored in a database to avoid rate limits
+    access_token = request.session.get('spotify_access_token')  # Temporary: Use session for now
 
     if not access_token:
+        # If no access token is found, return an empty artist list
         top_artists = []
     else:
+        # Fetch top artists from Spotify API
         url = "https://api.spotify.com/v1/me/top/artists"
         headers = {"Authorization": f"Bearer {access_token}"}
         params = {"time_range": "medium_term", "limit": 50}
@@ -204,7 +211,17 @@ def public_profile_view(request, username):
             top_artists = []
             print(f"Spotify API Error: {response.status_code}, {response.json()}")
 
+    # Render the public profile template
     return render(request, "profiles/public_profile.html", {
-        "profile_user": user,
-        "top_artists": top_artists,
+        "profile_user": user,  # The user being viewed
+        "top_artists": top_artists,  # List of top artists
     })
+from django.conf.urls import handler404
+from django.shortcuts import render
+
+def custom_404_view(request, exception):
+    print("Custom 404 page rendered")  # Debugging
+    return render(request, "404.html", status=404)
+
+
+handler404 = custom_404_view
