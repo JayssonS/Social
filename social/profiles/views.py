@@ -14,6 +14,8 @@ from django.shortcuts import redirect
 from django.conf import settings
 from urllib.parse import urlencode
 from django.shortcuts import get_object_or_404
+from .forms import UsernameChangeForm
+
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -180,13 +182,6 @@ def spotify_callback(request):
 
     return redirect("/dashboard/")  # Redirect to the dashboard
 
-from django.shortcuts import get_object_or_404
-
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.models import User
-from django.http import Http404
-import requests
-
 def public_profile_view(request, username):
     # Get the user by username or raise a 404 with a custom message
     user = get_object_or_404(User, username=username)
@@ -216,3 +211,18 @@ def public_profile_view(request, username):
         "profile_user": user,  # The user being viewed
         "top_artists": top_artists,  # List of top artists
     })
+
+@login_required
+def change_username_view(request):
+    profile = request.user.profile
+
+    if request.method == "POST":
+        form = UsernameChangeForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your username has been updated successfully!")
+            return redirect('dashboard')  # Redirect to the dashboard or another page
+    else:
+        form = UsernameChangeForm(instance=profile)
+
+    return render(request, 'profiles/change_username.html', {'form': form})
